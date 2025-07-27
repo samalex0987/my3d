@@ -287,41 +287,79 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         }
 
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 3rem;
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 20px; 
+            padding: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            overflow-y: auto; 
         }
-
-        .portfolio-item {
-            aspect-ratio: 1;
+        
+        .grid-item { 
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; 
+            box-shadow: 0 8px 32px rgba(0, 245, 255, 0.1); 
+            overflow: hidden; 
+            height: 420px; 
             transition: all 0.3s ease;
+            position: relative;
         }
 
-        .portfolio-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 20px 40px rgba(0, 245, 255, 0.3);
-        }
-
-        .portfolio-item::before {
+        .grid-item::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, rgba(0, 245, 255, 0.1), rgba(255, 0, 255, 0.1));
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            height: 3px;
+            background: linear-gradient(45deg, #00f5ff, #ff00ff, #00ff88);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
-        .portfolio-item:hover::before {
-            opacity: 1;
+        .grid-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .grid-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 245, 255, 0.3);
+        }
+        
+        .grid-item canvas { 
+            width: 100% !important; 
+            height: 360px !important; 
+            display: block; 
+        }
+        
+        .grid-item p { 
+            margin: 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            color: #ffffff;
+            font-size: 1.1rem;
+        }
+        
+        .error { 
+            color: #ff6b6b; 
+            text-align: center; 
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            margin: 10px;
+        }
+
+        .loading {
+            color: #00f5ff;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 245, 255, 0.1);
+            border-radius: 10px;
+            margin: 10px;
         }
 
         /* Footer */
@@ -369,8 +407,8 @@
                 grid-template-columns: 1fr;
             }
 
-            .portfolio-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .grid-container {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -455,99 +493,148 @@
         </div>
     </section>
 
-     <style>
-        body { margin: 0; font-family: Arial, sans-serif; background-color: #f0f0f0; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; overflow-y: auto; height: 100vh; }
-        .grid-item { background-color: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; height: 400px; }
-        .grid-item canvas { width: 100% !important; height: 400px !important; display: block; }
-        .grid-item p { margin: 10px; text-align: center; font-weight: bold; }
-        .error { color: red; text-align: center; }
-    </style>
-
     <section class="portfolio-preview" id="portfolio">
-
-        <div class="grid-container portfolio-grid" id="grid"></div>
+        <div class="container">
+            <h2 class="section-title fade-in">Portfolio</h2>
+        </div>
+        <div class="grid-container" id="grid"></div>
     </section>
 
+    <!-- Three.js and STL Loader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/STLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    
     <script>
         const objects = [
-            { path: './box.glb', name: 'Object 1' },
-            { path: './box.glb', name: 'Object 2' },
-            { path: './box.glb', name: 'Object 3' },
-            // { path: './box.glb', name: 'Object 4' },
-            // { path: './box.glb', name: 'Object 5' },
-            // { path: './box.glb', name: 'Object 6' },
-            // { path: './box.glb', name: 'Object 7' },
-            // { path: './box.glb', name: 'Object 8' },
-            // { path: './box.glb', name: 'Object 9' },
-            // { path: './box.glb', name: 'Object 10' }
+            { path: './handle.stl', name: 'Handle Model' },
+            { path: './handle.stl', name: 'Handle Copy 1' },
+            { path: './handle.stl', name: 'Handle Copy 2' },
+            // Add more STL files here
         ];
 
-        const loader = new THREE.GLTFLoader();
+        const stlLoader = new THREE.STLLoader();
 
         function createObjectScene(container, objectPath, objectName) {
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xffffff);
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.textContent = 'Loading 3D model...';
+            container.appendChild(loadingDiv);
 
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / 400, 0.1, 1000);
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / 360, 0.1, 1000);
             camera.position.set(0, 0, 6);
 
             const renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, 300);
-            container.appendChild(renderer.domElement);
-
+            renderer.setSize(container.clientWidth, 360);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.enableZoom = true;
             controls.minDistance = 2;
-            controls.maxDistance = 10;
+            controls.maxDistance = 15;
             controls.enablePan = true;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 1;
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Enhanced lighting setup
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
             scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
-            directionalLight.position.set(5, 5, 5);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
 
-            loader.load(
+            const pointLight1 = new THREE.PointLight(0x00f5ff, 0.5, 100);
+            pointLight1.position.set(-5, 5, 5);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0xff00ff, 0.3, 100);
+            pointLight2.position.set(5, -5, -5);
+            scene.add(pointLight2);
+
+            stlLoader.load(
                 objectPath,
-                (gltf) => {
-                    const model = gltf.scene;
-                    // Center the model
-                    const box = new THREE.Box3().setFromObject(model);
-                    const center = box.getCenter(new THREE.Vector3());
-                    model.position.sub(center);
-                    // Adjust scale based on bounding box size
-                    const size = box.getSize(new THREE.Vector3());
+                (geometry) => {
+                    // Remove loading message
+                    container.removeChild(loadingDiv);
+                    
+                    // Center the geometry
+                    geometry.computeBoundingBox();
+                    const center = new THREE.Vector3();
+                    geometry.boundingBox.getCenter(center);
+                    geometry.translate(-center.x, -center.y, -center.z);
+                    
+                    // Scale the geometry to fit
+                    const size = new THREE.Vector3();
+                    geometry.boundingBox.getSize(size);
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    const scale = 4 / maxDim; // Scale to fit within 4 units
-                    model.scale.set(scale, scale, scale);
-                    scene.add(model);
+                    const scale = 4 / maxDim;
+                    geometry.scale(scale, scale, scale);
+
+                    // Create material with gradient-like effect
+                    const material = new THREE.MeshPhongMaterial({
+                        color: 0x00d4ff,
+                        shininess: 100,
+                        specular: 0x222222,
+                        transparent: false
+                    });
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    scene.add(mesh);
+
+                    // Add the renderer to container after successful load
+                    container.appendChild(renderer.domElement);
+
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        controls.update();
+                        
+                        // Add some color animation
+                        const time = Date.now() * 0.001;
+                        material.color.setHSL(0.5 + 0.1 * Math.sin(time), 0.8, 0.6);
+                        
+                        renderer.render(scene, camera);
+                    }
+                    animate();
                 },
-                undefined,
+                (progress) => {
+                    // Update loading progress if needed
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    loadingDiv.textContent = `Loading 3D model... ${percent}%`;
+                },
                 (error) => {
-                    container.innerHTML += `<p class="error">Error loading ${objectName}: ${error.message}</p>`;
+                    container.removeChild(loadingDiv);
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = `<strong>Error loading ${objectName}</strong><br>Make sure the STL file exists at: ${objectPath}`;
+                    container.appendChild(errorDiv);
+                    console.error('STL loading error:', error);
                 }
             );
 
-            function animate() {
-                requestAnimationFrame(animate);
-                controls.update();
-                renderer.render(scene, camera);
-            }
-            animate();
-
+            // Handle window resize
             window.addEventListener('resize', () => {
-                camera.aspect = container.clientWidth / 300;
-                camera.updateProjectionMatrix();
-                renderer.setSize(container.clientWidth, 300);
+                if (renderer && camera) {
+                    camera.aspect = container.clientWidth / 360;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, 360);
+                }
             });
         }
 
+        // Create grid items for each object
         const gridContainer = document.getElementById('grid');
         objects.forEach(obj => {
             const gridItem = document.createElement('div');
